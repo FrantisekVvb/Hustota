@@ -2,6 +2,8 @@
 
 Interaktivní webová aplikace pro vizualizaci hustoty míčků v čtverci (nebo mřížce čtverců).
 
+**Online verze:** https://frantisekvvb.github.io/Hustota/
+
 ## Spuštění lokálně
 
 Potřebuješ [Node.js](https://nodejs.org/) 18 nebo novější.
