@@ -15,6 +15,8 @@ body {
   color: #0b1220;
   gap: 1.5rem;
   padding: 2rem;
+  transform: translateY(-5px) scale(0.95);
+  transform-origin: center center;
 }
 
 .main {
@@ -155,6 +157,7 @@ body {
   margin-top: 40px;
   margin-right: 56px;
   margin-bottom: 48px;
+  transform: translateY(-35px);
 }
 
 .arena-controls {
@@ -232,6 +235,10 @@ body {
     0 0 40px rgba(88, 166, 255, 0.15),
     inset 0 0 60px rgba(0, 0, 0, 0.5);
   overflow: hidden;
+}
+
+.arena.arena--max-size {
+  border-top-width: 5px;
 }
 
 canvas {

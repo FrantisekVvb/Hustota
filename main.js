@@ -296,7 +296,12 @@ function clampBalls() {
   });
 }
 
+function updateArenaBorder() {
+  arena.classList.toggle('arena--max-size', areaCm2 >= getMaxAreaCm2());
+}
+
 function syncCanvas() {
+  updateArenaBorder();
   const { bx, by } = getBorderSumPx();
   const contentWidth = getTotalWidth();
   const contentHeight = getTotalHeight();
