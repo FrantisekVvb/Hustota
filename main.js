@@ -190,24 +190,41 @@ function pickStartPatternIndex() {
   return index;
 }
 
-function getStartAngle(index, count, patternIndex = currentStartPatternIndex) {
+function getRandomStartAngle(patternIndex, ballIndex, ballsInSquare) {
   const patternRotation = (Math.PI * 2 * patternIndex) / START_PATTERN_COUNT;
-  return (Math.PI * 2 * index) / Math.max(count, 1) + patternRotation;
+  const fanAngle = (Math.PI * 2 * ballIndex) / Math.max(ballsInSquare, 1);
+  const randomAngle = Math.random() * Math.PI * 2;
+  const mix = patternIndex / START_PATTERN_COUNT;
+  return patternRotation + fanAngle * (1 - mix) + randomAngle * mix;
 }
 
-function setBallVelocity(ball, index, count, patternIndex = currentStartPatternIndex) {
-  const angle = getStartAngle(index, count, patternIndex);
+function setBallMotion(ball, patternIndex, ballIndex, ballsInSquare) {
+  const angle = getRandomStartAngle(patternIndex, ballIndex, ballsInSquare);
   ball.vx = Math.cos(angle) * SPEED;
   ball.vy = Math.sin(angle) * SPEED;
 }
 
 function applyStartVelocities(ballList) {
-  const count = ballList.length;
-  ballList.forEach((ball, index) => setBallVelocity(ball, index, count));
+  const patternIndex = currentStartPatternIndex;
+  ballList.forEach((ball, index) => setBallMotion(ball, patternIndex, index, ballList.length));
 }
 
-function createBall(index, count) {
-  const ball = {
+function applyStartVelocitiesToSquares(ballList, squareCountTotal, ballsPerSquare) {
+  for (let i = 0; i < squareCountTotal; i++) {
+    const squareBalls = ballList.slice(i * ballsPerSquare, (i + 1) * ballsPerSquare);
+    if (squareBalls.length) {
+      applyStartVelocities(squareBalls);
+    }
+  }
+}
+
+function randomizeBallMotion(ballList = balls, squareCountTotal = squareCount * rowCount) {
+  pickStartPatternIndex();
+  applyStartVelocitiesToSquares(ballList, squareCountTotal, ballCount);
+}
+
+function createBall(index) {
+  return {
     x: 0,
     y: 0,
     vx: 0,
@@ -215,8 +232,6 @@ function createBall(index, count) {
     radius: BALL_RADIUS,
     colors: colorsForIndex(index),
   };
-  setBallVelocity(ball, index, count);
-  return ball;
 }
 
 function cloneBall(ball) {
@@ -247,24 +262,27 @@ function layoutSquareBalls(squareCol, squareRow) {
   for (let i = 0; i < ballCount; i++) {
     const ballCol = i % cols;
     const ballRow = Math.floor(i / cols);
-    const ball = createBall(i, ballCount);
+    const ball = createBall(i);
     ball.x = offsetX + margin + ballCol * (cellSize - 2 * margin) / Math.max(cols - 1, 1);
     ball.y = offsetY + margin + ballRow * (cellSize - 2 * margin) / Math.max(gridRows - 1, 1);
-    normalizeSpeed(ball);
     newBalls.push(ball);
   }
 
   return newBalls;
 }
 
-function layoutAllSquares() {
-  pickStartPatternIndex();
+function relayoutAllSquareBalls() {
   balls = [];
   for (let row = 0; row < rowCount; row++) {
     for (let col = 0; col < squareCount; col++) {
       balls.push(...layoutSquareBalls(col, row));
     }
   }
+}
+
+function layoutAllSquares() {
+  relayoutAllSquareBalls();
+  randomizeBallMotion();
 }
 
 function clampBalls() {
@@ -330,8 +348,7 @@ function duplicateHorizontally() {
     });
   });
   balls.push(...newBalls);
-  pickStartPatternIndex();
-  applyStartVelocities(newBalls);
+  randomizeBallMotion(newBalls, oldSquareCount * rowCount);
 
   clampBalls();
   updateStats();
@@ -367,8 +384,7 @@ function duplicateVertically() {
     });
   });
   balls.push(...newBalls);
-  pickStartPatternIndex();
-  applyStartVelocities(newBalls);
+  randomizeBallMotion(newBalls, squareCount * oldRowCount);
 
   clampBalls();
   updateStats();
@@ -640,10 +656,43 @@ canvas.addEventListener('click', (e) => {
   ball.vy = (dy / dist) * SPEED;
 });
 
+function adjustBallsForCountChange(oldCount) {
+  const expectedOldTotal = squareCount * rowCount * oldCount;
+  if (balls.length !== expectedOldTotal) {
+    relayoutAllSquareBalls();
+    return;
+  }
+
+  const totalSquares = squareCount * rowCount;
+  const updated = [];
+
+  for (let sq = 0; sq < totalSquares; sq++) {
+    const col = sq % squareCount;
+    const row = Math.floor(sq / squareCount);
+    const squareStart = sq * oldCount;
+    const existing = balls.slice(squareStart, squareStart + oldCount);
+
+    if (ballCount > oldCount) {
+      updated.push(...existing);
+      updated.push(...layoutSquareBalls(col, row).slice(oldCount));
+    } else {
+      updated.push(...existing.slice(0, ballCount));
+    }
+  }
+
+  balls = updated;
+}
+
 function setBallCount(count) {
-  ballCount = Math.max(1, Math.min(MAX_BALLS, Math.floor(count)));
+  const nextCount = Math.max(1, Math.min(MAX_BALLS, Math.floor(count)));
+  if (nextCount === ballCount) return;
+
+  const oldCount = ballCount;
+  ballCount = nextCount;
   ballCountInput.value = String(ballCount);
-  layoutAllSquares();
+  adjustBallsForCountChange(oldCount);
+  randomizeBallMotion();
+  clampBalls();
   updateStats();
 }
 
