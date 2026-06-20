@@ -24,6 +24,7 @@ const DEFAULT_AREA_CM2 = 4;
 const DEFAULT_BALL_COUNT = 4;
 const MAX_SIDE_CM = Math.sqrt(MAX_AREA_CM2);
 const MAX_CONTENT_SIZE = MIN_ARENA_SIZE * Math.sqrt(MAX_AREA_CM2 / MIN_AREA_CM2);
+const START_PATTERN_COUNT = 10;
 
 let balls = [];
 let ballCount = Number(ballCountInput.value) || DEFAULT_BALL_COUNT;
@@ -34,6 +35,8 @@ let dragState = null;
 let areaCm2 = 0;
 let width = 0;
 let height = 0;
+let lastStartPatternIndex = -1;
+let currentStartPatternIndex = 0;
 
 function getBorderSumPx() {
   const s = getComputedStyle(arena);
@@ -170,16 +173,45 @@ function colorsForIndex(index) {
   ];
 }
 
+function pickStartPatternIndex() {
+  let index = Math.floor(Math.random() * START_PATTERN_COUNT);
+  if (START_PATTERN_COUNT > 1) {
+    while (index === lastStartPatternIndex) {
+      index = Math.floor(Math.random() * START_PATTERN_COUNT);
+    }
+  }
+  lastStartPatternIndex = index;
+  currentStartPatternIndex = index;
+  return index;
+}
+
+function getStartAngle(index, count, patternIndex = currentStartPatternIndex) {
+  const patternRotation = (Math.PI * 2 * patternIndex) / START_PATTERN_COUNT;
+  return (Math.PI * 2 * index) / Math.max(count, 1) + patternRotation;
+}
+
+function setBallVelocity(ball, index, count, patternIndex = currentStartPatternIndex) {
+  const angle = getStartAngle(index, count, patternIndex);
+  ball.vx = Math.cos(angle) * SPEED;
+  ball.vy = Math.sin(angle) * SPEED;
+}
+
+function applyStartVelocities(ballList) {
+  const count = ballList.length;
+  ballList.forEach((ball, index) => setBallVelocity(ball, index, count));
+}
+
 function createBall(index, count) {
-  const angle = (Math.PI * 2 * index) / Math.max(count, 1) + 0.3;
-  return {
+  const ball = {
     x: 0,
     y: 0,
-    vx: Math.cos(angle) * SPEED,
-    vy: Math.sin(angle) * SPEED,
+    vx: 0,
+    vy: 0,
     radius: BALL_RADIUS,
     colors: colorsForIndex(index),
   };
+  setBallVelocity(ball, index, count);
+  return ball;
 }
 
 function cloneBall(ball) {
@@ -221,6 +253,7 @@ function layoutSquareBalls(squareCol, squareRow) {
 }
 
 function layoutAllSquares() {
+  pickStartPatternIndex();
   balls = [];
   for (let row = 0; row < rowCount; row++) {
     for (let col = 0; col < squareCount; col++) {
@@ -283,13 +316,17 @@ function duplicateHorizontally() {
   });
 
   const offsetX = oldSquareCount * cellSize;
+  const newBalls = [];
   snapshots.forEach(({ localX, localY, data }) => {
-    balls.push({
+    newBalls.push({
       ...data,
       x: localX * scale + offsetX,
       y: localY * scale,
     });
   });
+  balls.push(...newBalls);
+  pickStartPatternIndex();
+  applyStartVelocities(newBalls);
 
   clampBalls();
   updateStats();
@@ -316,13 +353,17 @@ function duplicateVertically() {
   });
 
   const offsetY = oldRowCount * cellSize;
+  const newBalls = [];
   snapshots.forEach(({ localX, localY, data }) => {
-    balls.push({
+    newBalls.push({
       ...data,
       x: localX * scale,
       y: localY * scale + offsetY,
     });
   });
+  balls.push(...newBalls);
+  pickStartPatternIndex();
+  applyStartVelocities(newBalls);
 
   clampBalls();
   updateStats();
