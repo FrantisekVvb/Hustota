@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hustota</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="main">
+    <div class="stats-panel">
+      <div class="stats" aria-live="polite">
+        <div class="stat-item">
+          <div class="stats-label">Počet míčků</div>
+          <div class="stats-value" id="ballCountDisplay">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stats-label">Obsah plochy</div>
+          <div class="stats-value" id="areaValue">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stats-label">Hustota</div>
+          <div class="stats-value" id="densityValue">—</div>
+        </div>
+      </div>
+      <button class="reset-btn" id="resetBtn" type="button">Reset</button>
+    </div>
+
+    <div class="arena-composite" id="arenaComposite">
+      <div class="arena" id="arena">
+        <canvas id="canvas"></canvas>
+      </div>
+      <button class="add-arena-btn add-arena-btn--right" type="button" aria-label="Zkopírovat plochu vpravo">+</button>
+      <button class="add-arena-btn add-arena-btn--bottom" type="button" aria-label="Zkopírovat plochu dolů">+</button>
+      <div class="resize-handle n" data-edge="n"></div>
+      <div class="resize-handle s" data-edge="s"></div>
+      <div class="resize-handle e" data-edge="e"></div>
+      <div class="resize-handle w" data-edge="w"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label for="ballCount">Počet míčků</label>
+    <input id="ballCount" type="range" min="1" max="90" step="1" value="4">
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>

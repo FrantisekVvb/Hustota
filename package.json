@@ -1,0 +1,13 @@
+{
+  "name": "hustota",
+  "version": "1.0.0",
+  "description": "Hustota — interaktivní vizualizace hustoty míčků v čtverci",
+  "license": "MIT",
+  "scripts": {
+    "start": "npx --yes serve . -l 3472",
+    "dev": "npm start"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
