@@ -2,6 +2,7 @@ const arena = document.getElementById('arena');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const arenaComposite = document.getElementById('arenaComposite');
+const resizeHint = document.getElementById('resizeHint');
 const arenaControlsRight = document.querySelector('.arena-controls--right');
 const arenaControlsBottom = document.querySelector('.arena-controls--bottom');
 const shrinkArenaBtnRight = arenaControlsRight.querySelector('.arena-size-btn--minus');
@@ -40,6 +41,7 @@ let width = 0;
 let height = 0;
 let lastStartPatternIndex = -1;
 let currentStartPatternIndex = 0;
+let resizeHintTimeout = null;
 
 function getBorderSumPx() {
   const s = getComputedStyle(arena);
@@ -426,7 +428,26 @@ function resizeDelta(edge, dx, dy) {
   return 0;
 }
 
+function dismissResizeHint() {
+  arenaComposite.classList.remove('show-resize-hint');
+  resizeHint.classList.add('is-hidden');
+  if (resizeHintTimeout) {
+    clearTimeout(resizeHintTimeout);
+    resizeHintTimeout = null;
+  }
+}
+
+function showResizeHint() {
+  arenaComposite.classList.add('show-resize-hint');
+  resizeHint.classList.remove('is-hidden');
+  if (resizeHintTimeout) {
+    clearTimeout(resizeHintTimeout);
+  }
+  resizeHintTimeout = window.setTimeout(dismissResizeHint, 7000);
+}
+
 function startResize(e, handle) {
+  dismissResizeHint();
   e.preventDefault();
   handle.setPointerCapture(e.pointerId);
   dragState = {
@@ -635,6 +656,7 @@ function resetToInitial() {
   setCellSize(cellSize);
   layoutAllSquares();
   updateStats();
+  showResizeHint();
 }
 
 ballCountInput.addEventListener('input', () => {
@@ -675,4 +697,5 @@ window.addEventListener('resize', () => {
 setCellSize(cellSize);
 layoutAllSquares();
 updateStats();
+showResizeHint();
 loop();
