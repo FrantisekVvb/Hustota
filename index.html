@@ -30,8 +30,14 @@
       <div class="arena" id="arena">
         <canvas id="canvas"></canvas>
       </div>
-      <button class="add-arena-btn add-arena-btn--right" type="button" aria-label="Zkopírovat plochu vpravo">+</button>
-      <button class="add-arena-btn add-arena-btn--bottom" type="button" aria-label="Zkopírovat plochu dolů">+</button>
+      <div class="arena-controls arena-controls--right">
+        <button class="arena-size-btn arena-size-btn--minus" type="button" aria-label="Zmenšit plochu vpravo">−</button>
+        <button class="arena-size-btn arena-size-btn--plus" type="button" aria-label="Zkopírovat plochu vpravo">+</button>
+      </div>
+      <div class="arena-controls arena-controls--bottom">
+        <button class="arena-size-btn arena-size-btn--minus" type="button" aria-label="Zmenšit plochu dolů">−</button>
+        <button class="arena-size-btn arena-size-btn--plus" type="button" aria-label="Zkopírovat plochu dolů">+</button>
+      </div>
       <div class="resize-handle n" data-edge="n"></div>
       <div class="resize-handle s" data-edge="s"></div>
       <div class="resize-handle e" data-edge="e"></div>

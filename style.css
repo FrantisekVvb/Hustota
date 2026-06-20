@@ -89,12 +89,31 @@ body {
   position: relative;
   display: inline-flex;
   align-items: stretch;
-  margin-right: 48px;
+  margin-right: 56px;
   margin-bottom: 48px;
 }
 
-.add-arena-btn {
+.arena-controls {
   position: absolute;
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+
+.arena-controls--right {
+  left: 100%;
+  top: 50%;
+  flex-direction: column;
+  transform: translate(12px, -50%);
+}
+
+.arena-controls--bottom {
+  left: 50%;
+  top: 100%;
+  transform: translate(-50%, 12px);
+}
+
+.arena-size-btn {
   width: 36px;
   height: 36px;
   border: 2px solid #58a6ff;
@@ -105,37 +124,37 @@ body {
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
-  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.18);
 }
 
-.add-arena-btn--right {
-  left: 100%;
-  top: 50%;
-  transform: translate(12px, -50%);
-}
-
-.add-arena-btn--bottom {
-  left: 50%;
-  top: 100%;
-  transform: translate(-50%, 12px);
-}
-
-.add-arena-btn:hover {
+.arena-size-btn:hover {
   background: #eff6ff;
 }
 
-.add-arena-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-  background: #ffffff;
+.arena-size-btn--minus {
+  border-color: #ef4444;
+  color: #dc2626;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.18);
 }
 
-.add-arena-btn:disabled:hover {
-  background: #ffffff;
+.arena-size-btn--minus:hover {
+  background: #fef2f2;
+}
+
+.arena-size-btn:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #94a3b8;
+  box-shadow: none;
+}
+
+.arena-size-btn:disabled:hover {
+  background: #f1f5f9;
 }
 
 .arena {

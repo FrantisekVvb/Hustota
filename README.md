@@ -25,7 +25,9 @@ python3 -m http.server 3472
 - **Posuvník vpravo** — počet míčků v každém čtverci (1–90)
 - **Táhni za hranu** — změna velikosti čtverce (obsah 1–36 cm², krok 1 cm²)
 - **Tlačítko + vpravo** — zkopíruje celou plochu doprava
+- **Tlačítko − vpravo** — zmenší plochu vpravo na polovinu (odebere polovinu míčků)
 - **Tlačítko + dole** — zkopíruje celou plochu dolů
+- **Tlačítko − dole** — zmenší plochu dolů na polovinu (odebere polovinu míčků)
 - **Reset** — vrátí úvodní nastavení (4 cm², 4 míčky, jeden čtverec)
 - **Kliknutí do čtverce** — změna směru nejbližšího míčku
 

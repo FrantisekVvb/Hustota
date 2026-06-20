@@ -2,8 +2,12 @@ const arena = document.getElementById('arena');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const arenaComposite = document.getElementById('arenaComposite');
-const addArenaBtnRight = document.querySelector('.add-arena-btn--right');
-const addArenaBtnBottom = document.querySelector('.add-arena-btn--bottom');
+const arenaControlsRight = document.querySelector('.arena-controls--right');
+const arenaControlsBottom = document.querySelector('.arena-controls--bottom');
+const shrinkArenaBtnRight = arenaControlsRight.querySelector('.arena-size-btn--minus');
+const addArenaBtnRight = arenaControlsRight.querySelector('.arena-size-btn--plus');
+const shrinkArenaBtnBottom = arenaControlsBottom.querySelector('.arena-size-btn--minus');
+const addArenaBtnBottom = arenaControlsBottom.querySelector('.arena-size-btn--plus');
 const ballCountInput = document.getElementById('ballCount');
 const ballCountDisplay = document.getElementById('ballCountDisplay');
 const areaValue = document.getElementById('areaValue');
@@ -113,19 +117,39 @@ function canDuplicateVertically() {
   );
 }
 
-function updateAddButton() {
-  const horizontalAllowed = canDuplicateHorizontally();
-  const verticalAllowed = canDuplicateVertically();
+function canShrinkHorizontally() {
+  return squareCount >= 2;
+}
 
-  addArenaBtnRight.disabled = !horizontalAllowed;
-  addArenaBtnRight.title = horizontalAllowed
+function canShrinkVertically() {
+  return rowCount >= 2;
+}
+
+function updateSizeButtons() {
+  const horizontalExpandAllowed = canDuplicateHorizontally();
+  const verticalExpandAllowed = canDuplicateVertically();
+  const horizontalShrinkAllowed = canShrinkHorizontally();
+  const verticalShrinkAllowed = canShrinkVertically();
+
+  addArenaBtnRight.disabled = !horizontalExpandAllowed;
+  addArenaBtnRight.title = horizontalExpandAllowed
     ? 'Zkopírovat plochu vpravo'
     : 'Nelze zkopírovat — celková plocha by měla stranu delší než 6 cm';
 
-  addArenaBtnBottom.disabled = !verticalAllowed;
-  addArenaBtnBottom.title = verticalAllowed
+  shrinkArenaBtnRight.disabled = !horizontalShrinkAllowed;
+  shrinkArenaBtnRight.title = horizontalShrinkAllowed
+    ? 'Zmenšit plochu vpravo'
+    : 'Nelze zmenšit — zbývá jen jeden sloupec čtverců';
+
+  addArenaBtnBottom.disabled = !verticalExpandAllowed;
+  addArenaBtnBottom.title = verticalExpandAllowed
     ? 'Zkopírovat plochu dolů'
     : 'Nelze zkopírovat — celková plocha by měla stranu delší než 6 cm';
+
+  shrinkArenaBtnBottom.disabled = !verticalShrinkAllowed;
+  shrinkArenaBtnBottom.title = verticalShrinkAllowed
+    ? 'Zmenšit plochu dolů'
+    : 'Nelze zmenšit — zbývá jen jeden řádek čtverců';
 }
 
 function updateStats() {
@@ -134,7 +158,7 @@ function updateStats() {
   densityValue.textContent = getTotalAreaCm2()
     ? formatDensityText(getDensity())
     : '—';
-  updateAddButton();
+  updateSizeButtons();
 }
 
 function colorsForIndex(index) {
@@ -299,6 +323,52 @@ function duplicateVertically() {
       y: localY * scale + offsetY,
     });
   });
+
+  clampBalls();
+  updateStats();
+}
+
+function removeHalfOfBalls() {
+  balls = balls.slice(0, Math.floor(balls.length / 2));
+}
+
+function shrinkHorizontally() {
+  if (!canShrinkHorizontally()) return;
+
+  const oldCellSize = cellSize;
+  removeHalfOfBalls();
+
+  squareCount /= 2;
+  setCellSize(cellSize);
+
+  const scale = oldCellSize ? cellSize / oldCellSize : 1;
+  if (scale !== 1) {
+    balls.forEach((ball) => {
+      ball.x *= scale;
+      ball.y *= scale;
+    });
+  }
+
+  clampBalls();
+  updateStats();
+}
+
+function shrinkVertically() {
+  if (!canShrinkVertically()) return;
+
+  const oldCellSize = cellSize;
+  removeHalfOfBalls();
+
+  rowCount /= 2;
+  setCellSize(cellSize);
+
+  const scale = oldCellSize ? cellSize / oldCellSize : 1;
+  if (scale !== 1) {
+    balls.forEach((ball) => {
+      ball.x *= scale;
+      ball.y *= scale;
+    });
+  }
 
   clampBalls();
   updateStats();
@@ -529,7 +599,9 @@ ballCountInput.addEventListener('input', () => {
 
 resetBtn.addEventListener('click', resetToInitial);
 
+shrinkArenaBtnRight.addEventListener('click', shrinkHorizontally);
 addArenaBtnRight.addEventListener('click', duplicateHorizontally);
+shrinkArenaBtnBottom.addEventListener('click', shrinkVertically);
 addArenaBtnBottom.addEventListener('click', duplicateVertically);
 
 window.addEventListener('resize', () => {
