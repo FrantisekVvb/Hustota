@@ -13,6 +13,9 @@ const ballCountDisplay = document.getElementById('ballCountDisplay');
 const areaValue = document.getElementById('areaValue');
 const densityValue = document.getElementById('densityValue');
 const resetBtn = document.getElementById('resetBtn');
+const helpBtn = document.getElementById('helpBtn');
+const helpDialog = document.getElementById('helpDialog');
+const helpCloseBtn = document.getElementById('helpCloseBtn');
 
 const BALL_RADIUS = 4;
 const SPEED = 5;
@@ -639,6 +642,26 @@ ballCountInput.addEventListener('input', () => {
 });
 
 resetBtn.addEventListener('click', resetToInitial);
+
+helpBtn.addEventListener('click', () => {
+  helpDialog.showModal();
+});
+
+helpCloseBtn.addEventListener('click', () => {
+  helpDialog.close();
+});
+
+helpDialog.addEventListener('click', (e) => {
+  const rect = helpDialog.getBoundingClientRect();
+  const clickedBackdrop =
+    e.clientX < rect.left ||
+    e.clientX > rect.right ||
+    e.clientY < rect.top ||
+    e.clientY > rect.bottom;
+  if (clickedBackdrop) {
+    helpDialog.close();
+  }
+});
 
 shrinkArenaBtnRight.addEventListener('click', shrinkHorizontally);
 addArenaBtnRight.addEventListener('click', duplicateHorizontally);

@@ -23,7 +23,10 @@
           <div class="stats-value" id="densityValue">—</div>
         </div>
       </div>
-      <button class="reset-btn" id="resetBtn" type="button">Reset</button>
+      <div class="stats-actions">
+        <button class="panel-btn reset-btn" id="resetBtn" type="button">Reset</button>
+        <button class="panel-btn help-btn" id="helpBtn" type="button">Nápověda</button>
+      </div>
     </div>
 
     <div class="arena-composite" id="arenaComposite">
@@ -49,6 +52,23 @@
     <label for="ballCount">Počet míčků</label>
     <input id="ballCount" type="range" min="1" max="90" step="1" value="4">
   </div>
+
+  <dialog class="help-dialog" id="helpDialog">
+    <div class="help-dialog-header">
+      <h2>Nápověda</h2>
+      <button class="help-dialog-close" id="helpCloseBtn" type="button" aria-label="Zavřít">×</button>
+    </div>
+    <ul class="help-dialog-list">
+      <li><strong>Posuvník vpravo</strong> — počet míčků v každém čtverci (1–90)</li>
+      <li><strong>Táhni za hranu</strong> — změna velikosti čtverce (obsah 1–36 cm²)</li>
+      <li><strong>+ vpravo</strong> — zkopíruje celou plochu doprava a zdvojnásobí celkový počet míčků</li>
+      <li><strong>− vpravo</strong> — zmenší plochu vpravo na polovinu a odebere polovinu míčků</li>
+      <li><strong>+ dole</strong> — zkopíruje celou plochu dolů a zdvojnásobí celkový počet míčků</li>
+      <li><strong>− dole</strong> — zmenší plochu dolů na polovinu a odebere polovinu míčků</li>
+      <li><strong>Reset</strong> — vrátí úvodní nastavení (4 cm², 4 míčky)</li>
+      <li><strong>Kliknutí do čtverce</strong> — změna směru nejbližšího míčku</li>
+    </ul>
+  </dialog>
 
   <script src="main.js"></script>
 </body>

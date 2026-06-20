@@ -43,9 +43,14 @@ body {
   box-shadow: 0 10px 26px rgba(2, 6, 23, 0.08);
 }
 
-.reset-btn {
-  width: 100%;
-  padding: 10px 16px;
+.stats-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.panel-btn {
+  flex: 1;
+  padding: 10px 12px;
   border: 1px solid rgba(15, 23, 42, 0.12);
   border-radius: 12px;
   background: #ffffff;
@@ -56,10 +61,67 @@ body {
   box-shadow: 0 10px 26px rgba(2, 6, 23, 0.08);
 }
 
-.reset-btn:hover {
+.panel-btn:hover {
   background: #f8fafc;
   border-color: rgba(37, 99, 235, 0.35);
   color: #2563eb;
+}
+
+.help-dialog {
+  width: min(620px, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  padding: 0;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(2, 6, 23, 0.18);
+  margin: auto;
+  position: fixed;
+  inset: 0;
+  height: fit-content;
+}
+
+.help-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.help-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.10);
+}
+
+.help-dialog-header h2 {
+  font-size: 1.1rem;
+  font-weight: 650;
+}
+
+.help-dialog-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.help-dialog-close:hover {
+  background: #f1f5f9;
+  color: #0b1220;
+}
+
+.help-dialog-list {
+  padding: 14px 16px 18px 28px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.help-dialog-list li + li {
+  margin-top: 8px;
 }
 
 .stats-label {
