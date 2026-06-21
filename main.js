@@ -231,7 +231,7 @@ class Field {
   }
 
   shouldUseMask() {
-    return maskEnabled && activeFieldCount >= 2;
+    return maskEnabled;
   }
 
   canDuplicateHorizontally() {
@@ -706,6 +706,10 @@ class Field {
 
   drawScene(ctx = this.ctx) {
     this.drawSquareDividers(ctx);
+    this.drawBalls(ctx);
+  }
+
+  drawBalls(ctx = this.ctx) {
     this.balls.forEach((ball) => this.drawBall(ball, ctx));
   }
 
@@ -734,11 +738,12 @@ class Field {
 
     const holeSide = this.getMaskHoleSidePx();
     const { maskHoleX: x, maskHoleY: y } = this;
-    this.ctx.drawImage(
-      this.offscreenCanvas,
-      x, y, holeSide, holeSide,
-      x, y, holeSide, holeSide
-    );
+    this.ctx.save();
+    this.ctx.beginPath();
+    this.ctx.rect(x, y, holeSide, holeSide);
+    this.ctx.clip();
+    this.drawBalls(this.ctx);
+    this.ctx.restore();
     this.drawMaskHoleBorder();
   }
 
@@ -1247,7 +1252,6 @@ function setActiveFieldCount(count) {
   document.body.classList.toggle('fields-mode--two', count === 2);
 
   if (count === 1) {
-    setMaskEnabled(false);
     mountSoloStatsPanel();
   } else {
     unmountSoloStatsPanel();
@@ -1303,7 +1307,6 @@ fieldModeTwoBtn.addEventListener('click', () => {
 });
 
 maskBtn?.addEventListener('click', () => {
-  if (activeFieldCount !== 2) return;
   setMaskEnabled(!maskEnabled);
 });
 
