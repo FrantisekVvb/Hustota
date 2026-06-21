@@ -26,8 +26,9 @@ body {
   align-items: flex-start;
   justify-content: center;
   width: 100%;
-  min-height: 100vh;
+  min-height: auto;
   box-sizing: border-box;
+  margin-top: 52px;
   padding: 2.5rem 2rem 1.5rem;
   transform: translateY(15px) scale(0.9025);
   transform-origin: top center;
@@ -36,22 +37,135 @@ body {
 
 .main {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.fields-row {
+  display: flex;
   align-items: flex-start;
   justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.field-unit {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
   flex-shrink: 0;
-  transform: translateX(60px);
 }
 
 .stats-panel {
+  width: 220px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stats-panel--fixed {
   position: fixed;
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
   width: 260px;
   z-index: 5;
-  display: flex;
-  flex-direction: column;
+}
+
+body.fields-mode--one .fields-row {
+  transform: translateX(60px);
+}
+
+body.fields-mode--two .field-unit {
+  flex-direction: column-reverse;
+  align-items: center;
   gap: 12px;
+}
+
+body.fields-mode--two .stats-panel {
+  width: 100%;
+}
+
+body.fields-mode--two .arena-controls {
+  display: none;
+}
+
+body.fields-mode--two .arena-composite {
+  margin-right: 0;
+  margin-bottom: 0;
+}
+
+.field-unit.is-hidden {
+  display: none;
+}
+
+.global-actions {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 16px rgba(2, 6, 23, 0.06);
+}
+
+.global-actions-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.global-actions .simulations-overview-btn {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: auto;
+  white-space: nowrap;
+}
+
+.field-mode-toggle {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.field-mode-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.field-mode-btn[aria-pressed="true"] {
+  background: #ffffff;
+  color: #2563eb;
+  box-shadow: 0 2px 8px rgba(2, 6, 23, 0.08);
+}
+
+.field-mode-btn:hover:not([aria-pressed="true"]) {
+  color: #0b1220;
+}
+
+.global-actions .panel-btn {
+  min-width: 120px;
 }
 
 .stats {
@@ -64,8 +178,7 @@ body {
 }
 
 .stats-actions {
-  display: flex;
-  gap: 8px;
+  display: none;
 }
 
 .panel-btn {
@@ -157,7 +270,8 @@ body {
   line-height: 1.25;
 }
 
-#densityValue {
+#densityValue,
+.density-value {
   font-size: 1.2rem;
   white-space: nowrap;
 }
@@ -372,38 +486,67 @@ canvas {
   transform: translateX(-50%);
 }
 
-.controls {
-  position: fixed;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  user-select: none;
-  z-index: 5;
-  padding: 10px 8px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.15);
+.stat-item--ball-count .ball-count-scrub-wrap {
+  margin-top: -2px;
 }
 
-.controls label {
-  opacity: 0.9;
-  font-size: 0.85rem;
-  letter-spacing: 0.02em;
-}
-
-.controls input[type="range"] {
-  -webkit-appearance: slider-vertical;
-  appearance: slider-vertical;
-  writing-mode: bt-lr;
-  width: 18px;
-  height: 180px;
-  transform: none;
-  accent-color: #58a6ff;
+.stat-item--ball-count .channel-scrub {
+  cursor: ew-resize;
+  display: inline-block;
+  padding: 4px 2px;
+  margin: -4px -2px;
+  border-radius: 10px;
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.stat-item--ball-count .channel-scrub:focus {
+  outline: none;
+}
+
+.stat-item--ball-count .channel-scrub:focus-visible {
+  outline: 2px solid #58a6ff;
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+.stat-item--ball-count .channel-scrub:hover .channel-scrub-inner {
+  background: rgba(88, 166, 255, 0.12);
+}
+
+.stat-item--ball-count .channel-scrub-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  border-radius: 8px;
+  transition: background 0.12s ease;
+}
+
+.stat-item--ball-count .channel-scrub-arrow {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: auto;
+  cursor: pointer;
+  opacity: 0.45;
+  padding: 4px 2px;
+  margin: -4px -2px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  color: #0b1220;
+}
+
+.stat-item--ball-count .channel-scrub-arrow:hover,
+.stat-item--ball-count .channel-scrub:hover .channel-scrub-arrow {
+  opacity: 0.85;
+}
+
+.stat-item--ball-count .channel-val {
+  min-width: 2ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
