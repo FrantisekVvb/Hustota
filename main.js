@@ -132,7 +132,8 @@ class Field {
     this.addArenaBtnBottom = this.arenaControlsBottom.querySelector('.arena-size-btn--plus');
     this.ballCountScrub = root.querySelector('.ball-count-scrub');
     this.ballCountValue = root.querySelector('.ball-count-value');
-    this.areaValue = root.querySelector('.area-value');
+    this.areaScrub = root.querySelector('.area-scrub');
+    this.areaScrubValue = root.querySelector('.area-scrub-value');
     this.densityValue = root.querySelector('.density-value');
 
     this.balls = [];
@@ -244,12 +245,12 @@ class Field {
   }
 
   updateStats() {
-    this.areaValue.textContent = this.getTotalAreaCm2() ? `${this.getTotalAreaCm2()} cm²` : '—';
     this.densityValue.textContent = this.getTotalAreaCm2()
       ? formatDensityText(this.getDensity())
       : '—';
     this.updateSizeButtons();
     this.updateBallCountScrubDisplay();
+    this.updateAreaScrubDisplay();
   }
 
   getSquareCount() {
@@ -266,6 +267,14 @@ class Field {
 
   getTotalBallCount() {
     return this.balls.length;
+  }
+
+  getMinTotalAreaCm2() {
+    return MIN_AREA_CM2 * this.getSquareCount();
+  }
+
+  getMaxTotalAreaCm2() {
+    return this.getMaxAreaCm2() * this.getSquareCount();
   }
 
   colorsForIndex(index) {
@@ -825,6 +834,159 @@ class Field {
     this.updateBallCountScrubDisplay();
   }
 
+  updateAreaScrubDisplay() {
+    const total = this.getTotalAreaCm2();
+    this.areaScrubValue.textContent = total ? `${total} cm²` : '—';
+    if (!total) return;
+    this.areaScrub.setAttribute('aria-valuenow', String(total));
+    this.areaScrub.setAttribute('aria-valuemin', String(this.getMinTotalAreaCm2()));
+    this.areaScrub.setAttribute('aria-valuemax', String(this.getMaxTotalAreaCm2()));
+  }
+
+  setAreaCm2(area) {
+    const maxArea = this.getMaxAreaCm2();
+    const nextArea = Math.max(MIN_AREA_CM2, Math.min(maxArea, Math.round(area)));
+    if (nextArea === this.areaCm2) {
+      this.updateAreaScrubDisplay();
+      return;
+    }
+
+    const oldCellSize = this.cellSize;
+    const px = MIN_ARENA_SIZE * Math.sqrt(nextArea / MIN_AREA_CM2);
+    this.setCellSize(px);
+
+    const scale = oldCellSize ? this.cellSize / oldCellSize : 1;
+    if (scale !== 1) {
+      this.balls.forEach((ball) => {
+        ball.x *= scale;
+        ball.y *= scale;
+      });
+      this.clampBalls();
+      this.updateStats();
+    }
+  }
+
+  setTotalAreaCm2(targetTotal) {
+    const numSquares = this.getSquareCount();
+    const currentTotal = this.getTotalAreaCm2();
+    const maxPerCell = this.getMaxAreaCm2();
+    const clamped = Math.max(
+      this.getMinTotalAreaCm2(),
+      Math.min(this.getMaxTotalAreaCm2(), Math.floor(targetTotal))
+    );
+    if (currentTotal === clamped) return;
+
+    let perCell = clamped > currentTotal
+      ? Math.ceil(clamped / numSquares)
+      : Math.floor(clamped / numSquares);
+    perCell = Math.max(MIN_AREA_CM2, Math.min(maxPerCell, perCell));
+
+    if (perCell === this.areaCm2) {
+      if (clamped > currentTotal && this.areaCm2 < maxPerCell) {
+        this.setAreaCm2(this.areaCm2 + 1);
+      } else if (clamped < currentTotal && this.areaCm2 > MIN_AREA_CM2) {
+        this.setAreaCm2(this.areaCm2 - 1);
+      }
+      return;
+    }
+
+    this.setAreaCm2(perCell);
+  }
+
+  applyTotalAreaCm2Value(nextTotal) {
+    const clamped = Math.max(
+      this.getMinTotalAreaCm2(),
+      Math.min(this.getMaxTotalAreaCm2(), Math.floor(nextTotal))
+    );
+    if (clamped !== this.getTotalAreaCm2()) {
+      this.setTotalAreaCm2(clamped);
+      return;
+    }
+    this.updateAreaScrubDisplay();
+  }
+
+  bindAreaScrub() {
+    let dragging = false;
+    let startX = 0;
+    let startV = 0;
+
+    const applyFromDrag = (clientX) => {
+      const delta = Math.round((clientX - startX) / 2);
+      this.applyTotalAreaCm2Value(startV + delta);
+    };
+
+    const bindScrubArrow = (el, delta) => {
+      if (!el) return;
+      el.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+      });
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.setTotalAreaCm2(this.getTotalAreaCm2() + delta);
+      });
+    };
+
+    bindScrubArrow(this.areaScrub.querySelector('.channel-scrub-arrow-dec'), -1);
+    bindScrubArrow(this.areaScrub.querySelector('.channel-scrub-arrow-inc'), 1);
+
+    this.areaScrub.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      if (e.target.closest('.channel-scrub-arrow')) return;
+      this.areaScrub.setPointerCapture(e.pointerId);
+      dragging = true;
+      startX = e.clientX;
+      startV = this.getTotalAreaCm2();
+      e.preventDefault();
+    });
+
+    this.areaScrub.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      applyFromDrag(e.clientX);
+    });
+
+    const endDrag = (e) => {
+      if (!dragging) return;
+      dragging = false;
+      try {
+        this.areaScrub.releasePointerCapture(e.pointerId);
+      } catch (_) {}
+    };
+
+    this.areaScrub.addEventListener('pointerup', endDrag);
+    this.areaScrub.addEventListener('pointercancel', () => {
+      dragging = false;
+    });
+
+    this.areaScrub.addEventListener('keydown', (e) => {
+      let next = this.getTotalAreaCm2();
+      const maxTotal = this.getMaxTotalAreaCm2();
+      const minTotal = this.getMinTotalAreaCm2();
+      if (e.key === 'ArrowRight' || e.key === 'ArrowUp') next = Math.min(maxTotal, next + 1);
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') next = Math.max(minTotal, next - 1);
+      else if (e.key === 'PageUp') next = Math.min(maxTotal, next + 10);
+      else if (e.key === 'PageDown') next = Math.max(minTotal, next - 10);
+      else if (e.key === 'Home') next = minTotal;
+      else if (e.key === 'End') next = maxTotal;
+      else return;
+      e.preventDefault();
+      this.applyTotalAreaCm2Value(next);
+    });
+
+    this.areaScrub.addEventListener(
+      'wheel',
+      (e) => {
+        e.preventDefault();
+        const step = e.shiftKey ? 5 : 1;
+        const dir = e.deltaY > 0 ? -step : step;
+        this.applyTotalAreaCm2Value(this.getTotalAreaCm2() + dir);
+      },
+      { passive: false }
+    );
+  }
+
   bindBallCountScrub() {
     let dragging = false;
     let startX = 0;
@@ -943,6 +1105,7 @@ class Field {
     this.addArenaBtnBottom.addEventListener('click', () => this.duplicateVertically());
 
     this.bindBallCountScrub();
+    this.bindAreaScrub();
   }
 }
 

@@ -486,11 +486,13 @@ canvas {
   transform: translateX(-50%);
 }
 
-.stat-item--ball-count .ball-count-scrub-wrap {
+.stat-item--ball-count .ball-count-scrub-wrap,
+.stat-item--area .area-scrub-wrap {
   margin-top: -2px;
 }
 
-.stat-item--ball-count .channel-scrub {
+.stat-item--ball-count .channel-scrub,
+.stat-item--area .channel-scrub {
   cursor: ew-resize;
   display: inline-block;
   padding: 4px 2px;
@@ -501,21 +503,25 @@ canvas {
   -webkit-user-select: none;
 }
 
-.stat-item--ball-count .channel-scrub:focus {
+.stat-item--ball-count .channel-scrub:focus,
+.stat-item--area .channel-scrub:focus {
   outline: none;
 }
 
-.stat-item--ball-count .channel-scrub:focus-visible {
+.stat-item--ball-count .channel-scrub:focus-visible,
+.stat-item--area .channel-scrub:focus-visible {
   outline: 2px solid #58a6ff;
   outline-offset: 2px;
   border-radius: 10px;
 }
 
-.stat-item--ball-count .channel-scrub:hover .channel-scrub-inner {
+.stat-item--ball-count .channel-scrub:hover .channel-scrub-inner,
+.stat-item--area .channel-scrub:hover .channel-scrub-inner {
   background: rgba(88, 166, 255, 0.12);
 }
 
-.stat-item--ball-count .channel-scrub-inner {
+.stat-item--ball-count .channel-scrub-inner,
+.stat-item--area .channel-scrub-inner {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -524,7 +530,8 @@ canvas {
   transition: background 0.12s ease;
 }
 
-.stat-item--ball-count .channel-scrub-arrow {
+.stat-item--ball-count .channel-scrub-arrow,
+.stat-item--area .channel-scrub-arrow {
   flex-shrink: 0;
   font-size: 0.72rem;
   font-weight: 900;
@@ -541,11 +548,14 @@ canvas {
 }
 
 .stat-item--ball-count .channel-scrub-arrow:hover,
-.stat-item--ball-count .channel-scrub:hover .channel-scrub-arrow {
+.stat-item--ball-count .channel-scrub:hover .channel-scrub-arrow,
+.stat-item--area .channel-scrub-arrow:hover,
+.stat-item--area .channel-scrub:hover .channel-scrub-arrow {
   opacity: 0.85;
 }
 
-.stat-item--ball-count .channel-val {
+.stat-item--ball-count .channel-val,
+.stat-item--area .channel-val {
   min-width: 2ch;
   text-align: center;
   font-variant-numeric: tabular-nums;
