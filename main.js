@@ -4,6 +4,7 @@ const helpDialog = document.getElementById('helpDialog');
 const helpCloseBtn = document.getElementById('helpCloseBtn');
 const fieldModeOneBtn = document.getElementById('fieldModeOne');
 const fieldModeTwoBtn = document.getElementById('fieldModeTwo');
+const maskBtn = document.getElementById('maskBtn');
 const appShell = document.querySelector('.app-shell');
 
 const BALL_RADIUS = 4;
@@ -20,9 +21,12 @@ const BASE_UI_SCALE = 0.9025;
 const UI_OFFSET_Y = 15;
 
 const DEFAULT_FIELD_COUNT = 1;
+const MASK_HOLE_AREA_CM2 = 1;
+const MASK_BLUR_PX = 10;
 
 const fields = [];
 let activeFieldCount = DEFAULT_FIELD_COUNT;
+let maskEnabled = false;
 
 function getFieldCount() {
   return activeFieldCount;
@@ -148,6 +152,10 @@ class Field {
     this.lastStartPatternIndex = -1;
     this.currentStartPatternIndex = 0;
     this.resizeHintTimeout = null;
+    this.maskHoleX = 0;
+    this.maskHoleY = 0;
+    this.offscreenCanvas = null;
+    this.offscreenCtx = null;
 
     this.bindEvents();
   }
@@ -192,6 +200,38 @@ class Field {
 
   getSideLengthCm() {
     return Math.sqrt(this.areaCm2);
+  }
+
+  getCmToPx() {
+    const sideCm = this.getSideLengthCm();
+    return sideCm ? this.cellSize / sideCm : MIN_ARENA_SIZE;
+  }
+
+  getMaskHoleSidePx() {
+    return this.getCmToPx() * Math.sqrt(MASK_HOLE_AREA_CM2);
+  }
+
+  updateMaskHolePosition() {
+    const holeSide = this.getMaskHoleSidePx();
+    const totalWidth = this.getTotalWidth();
+    const totalHeight = this.getTotalHeight();
+    this.maskHoleX = Math.max(0, (totalWidth - holeSide) / 2);
+    this.maskHoleY = Math.max(0, (totalHeight - holeSide) / 2);
+  }
+
+  ensureOffscreenCanvas() {
+    if (!this.offscreenCanvas) {
+      this.offscreenCanvas = document.createElement('canvas');
+      this.offscreenCtx = this.offscreenCanvas.getContext('2d');
+    }
+    if (this.offscreenCanvas.width !== this.width || this.offscreenCanvas.height !== this.height) {
+      this.offscreenCanvas.width = this.width;
+      this.offscreenCanvas.height = this.height;
+    }
+  }
+
+  shouldUseMask() {
+    return maskEnabled && activeFieldCount >= 2;
   }
 
   canDuplicateHorizontally() {
@@ -419,6 +459,9 @@ class Field {
     this.height = this.canvas.height = this.arena.clientHeight;
     this.clampBalls();
     this.updateStats();
+    if (this.shouldUseMask()) {
+      this.updateMaskHolePosition();
+    }
     updateViewportFit();
   }
 
@@ -609,9 +652,9 @@ class Field {
     this.dragState = null;
   }
 
-  drawBall(ball) {
+  drawBall(ball, ctx = this.ctx) {
     const { x, y, radius, colors } = ball;
-    const gradient = this.ctx.createRadialGradient(
+    const gradient = ctx.createRadialGradient(
       x - radius * 0.35, y - radius * 0.35, radius * 0.1,
       x, y, radius
     );
@@ -619,46 +662,84 @@ class Field {
     gradient.addColorStop(0.5, colors[1]);
     gradient.addColorStop(1, colors[2]);
 
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, radius, 0, Math.PI * 2);
-    this.ctx.fillStyle = gradient;
-    this.ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
+    ctx.fill();
 
-    this.ctx.beginPath();
-    this.ctx.arc(x - radius * 0.3, y - radius * 0.3, radius * 0.25, 0, Math.PI * 2);
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-    this.ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x - radius * 0.3, y - radius * 0.3, radius * 0.25, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.fill();
 
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, radius, 0, Math.PI * 2);
-    this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-    this.ctx.lineWidth = 1;
-    this.ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
   }
 
-  drawSquareDividers() {
+  drawSquareDividers(ctx = this.ctx) {
     const totalWidth = this.getTotalWidth();
     const totalHeight = this.getTotalHeight();
     if (this.squareCount <= 1 && this.rowCount <= 1) return;
 
-    this.ctx.strokeStyle = 'rgba(88, 166, 255, 0.35)';
-    this.ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(88, 166, 255, 0.35)';
+    ctx.lineWidth = 2;
 
     for (let i = 1; i < this.squareCount; i++) {
       const x = i * this.cellSize;
-      this.ctx.beginPath();
-      this.ctx.moveTo(x, 0);
-      this.ctx.lineTo(x, totalHeight);
-      this.ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, totalHeight);
+      ctx.stroke();
     }
 
     for (let i = 1; i < this.rowCount; i++) {
       const y = i * this.cellSize;
-      this.ctx.beginPath();
-      this.ctx.moveTo(0, y);
-      this.ctx.lineTo(totalWidth, y);
-      this.ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(totalWidth, y);
+      ctx.stroke();
     }
+  }
+
+  drawScene(ctx = this.ctx) {
+    this.drawSquareDividers(ctx);
+    this.balls.forEach((ball) => this.drawBall(ball, ctx));
+  }
+
+  drawMaskHoleBorder() {
+    const holeSide = this.getMaskHoleSidePx();
+    const { maskHoleX: x, maskHoleY: y } = this;
+
+    this.ctx.save();
+    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    this.ctx.lineWidth = 2;
+    this.ctx.setLineDash([6, 4]);
+    this.ctx.strokeRect(x + 0.5, y + 0.5, holeSide - 1, holeSide - 1);
+    this.ctx.restore();
+  }
+
+  drawWithMask() {
+    this.ensureOffscreenCanvas();
+    this.offscreenCtx.clearRect(0, 0, this.width, this.height);
+    this.drawScene(this.offscreenCtx);
+
+    this.ctx.clearRect(0, 0, this.width, this.height);
+    this.ctx.save();
+    this.ctx.filter = `blur(${MASK_BLUR_PX}px)`;
+    this.ctx.drawImage(this.offscreenCanvas, 0, 0);
+    this.ctx.restore();
+
+    const holeSide = this.getMaskHoleSidePx();
+    const { maskHoleX: x, maskHoleY: y } = this;
+    this.ctx.drawImage(
+      this.offscreenCanvas,
+      x, y, holeSide, holeSide,
+      x, y, holeSide, holeSide
+    );
+    this.drawMaskHoleBorder();
   }
 
   updateWalls(ball) {
@@ -733,9 +814,13 @@ class Field {
   }
 
   draw() {
+    if (this.shouldUseMask()) {
+      this.drawWithMask();
+      return;
+    }
+
     this.ctx.clearRect(0, 0, this.width, this.height);
-    this.drawSquareDividers();
-    this.balls.forEach((ball) => this.drawBall(ball));
+    this.drawScene();
   }
 
   findNearestBall(x, y) {
@@ -1140,12 +1225,29 @@ function unmountSoloStatsPanel() {
   }
 }
 
+function updateMaskButton() {
+  if (!maskBtn) return;
+  maskBtn.setAttribute('aria-pressed', maskEnabled ? 'true' : 'false');
+  maskBtn.title = maskEnabled
+    ? 'Vypnout masku — zobrazit celou plochu'
+    : 'Zapnout masku — rozmaže plochu kromě okna 1 cm²';
+}
+
+function setMaskEnabled(enabled) {
+  maskEnabled = enabled;
+  updateMaskButton();
+  if (maskEnabled) {
+    getVisibleFields().forEach((field) => field.updateMaskHolePosition());
+  }
+}
+
 function setActiveFieldCount(count) {
   activeFieldCount = count;
   document.body.classList.toggle('fields-mode--one', count === 1);
   document.body.classList.toggle('fields-mode--two', count === 2);
 
   if (count === 1) {
+    setMaskEnabled(false);
     mountSoloStatsPanel();
   } else {
     unmountSoloStatsPanel();
@@ -1178,6 +1280,7 @@ function loop() {
 
 initFields();
 setActiveFieldCount(DEFAULT_FIELD_COUNT);
+updateMaskButton();
 
 fields.forEach((field) => {
   field.setCellSize(field.cellSize);
@@ -1197,6 +1300,11 @@ fieldModeTwoBtn.addEventListener('click', () => {
     setActiveFieldCount(2);
     fields.forEach((field) => field.resetToInitial());
   }
+});
+
+maskBtn?.addEventListener('click', () => {
+  if (activeFieldCount !== 2) return;
+  setMaskEnabled(!maskEnabled);
 });
 
 helpBtn.addEventListener('click', () => {

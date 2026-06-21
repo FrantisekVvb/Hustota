@@ -168,6 +168,16 @@ body.fields-mode--two .arena-composite {
   min-width: 120px;
 }
 
+body.fields-mode--one .mask-btn {
+  display: none;
+}
+
+.mask-btn[aria-pressed="true"] {
+  background: #eff6ff;
+  border-color: rgba(37, 99, 235, 0.45);
+  color: #2563eb;
+}
+
 .stats {
   width: 100%;
   padding: 14px 16px;
