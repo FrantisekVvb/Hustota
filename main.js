@@ -29,6 +29,8 @@ const DEFAULT_BALL_COUNT = 4;
 const MAX_SIDE_CM = Math.sqrt(MAX_AREA_CM2);
 const MAX_CONTENT_SIZE = MIN_ARENA_SIZE * Math.sqrt(MAX_AREA_CM2 / MIN_AREA_CM2);
 const START_PATTERN_COUNT = 10;
+const BASE_UI_SCALE = 0.9025;
+const UI_OFFSET_Y = 15;
 
 let balls = [];
 let ballCount = Number(ballCountInput.value) || DEFAULT_BALL_COUNT;
@@ -58,12 +60,7 @@ function getMaxAreaCm2() {
 }
 
 function getMaxCellSize() {
-  const maxFromDimensions = MIN_ARENA_SIZE * Math.sqrt(getMaxAreaCm2() / MIN_AREA_CM2);
-  return Math.min(
-    (window.innerWidth - 360) / squareCount,
-    (window.innerHeight - 80) / rowCount,
-    maxFromDimensions
-  );
+  return MIN_ARENA_SIZE * Math.sqrt(getMaxAreaCm2() / MIN_AREA_CM2);
 }
 
 function getTotalWidth() {
@@ -300,6 +297,25 @@ function updateArenaBorder() {
   arena.classList.toggle('arena--max-size', areaCm2 >= getMaxAreaCm2());
 }
 
+function updateViewportFit() {
+  const shell = document.querySelector('.app-shell');
+  if (!shell) return;
+
+  const shellStyle = getComputedStyle(shell);
+  const padTop = Number.parseFloat(shellStyle.paddingTop) || 0;
+  const padBottom = Number.parseFloat(shellStyle.paddingBottom) || 0;
+  const availableHeight = window.innerHeight - padTop - padBottom - 8;
+  const contentHeight = shell.offsetHeight;
+
+  let scale = BASE_UI_SCALE;
+  if (contentHeight * scale > availableHeight) {
+    scale = Math.min(BASE_UI_SCALE, availableHeight / contentHeight);
+  }
+
+  shell.style.transform = `translateY(${UI_OFFSET_Y}px) scale(${scale})`;
+  shell.style.transformOrigin = 'top center';
+}
+
 function syncCanvas() {
   updateArenaBorder();
   const { bx, by } = getBorderSumPx();
@@ -311,6 +327,7 @@ function syncCanvas() {
   height = canvas.height = arena.clientHeight;
   clampBalls();
   updateStats();
+  updateViewportFit();
 }
 
 function setCellSize(size) {
@@ -747,6 +764,16 @@ addArenaBtnBottom.addEventListener('click', duplicateVertically);
 window.addEventListener('resize', () => {
   setCellSize(cellSize);
 });
+
+const appShell = document.querySelector('.app-shell');
+
+function lockSceneTouchScroll(e) {
+  if (e.cancelable) {
+    e.preventDefault();
+  }
+}
+
+appShell.addEventListener('touchmove', lockSceneTouchScroll, { passive: false });
 
 setCellSize(cellSize);
 layoutAllSquares();

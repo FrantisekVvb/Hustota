@@ -2,33 +2,34 @@
 <html lang="cs">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Hustota</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="main">
-    <div class="stats-panel">
-      <div class="stats" aria-live="polite">
-        <div class="stat-item">
-          <div class="stats-label">Počet míčků</div>
-          <div class="stats-value" id="ballCountDisplay">—</div>
-        </div>
-        <div class="stat-item">
-          <div class="stats-label">Obsah plochy</div>
-          <div class="stats-value" id="areaValue">—</div>
-        </div>
-        <div class="stat-item">
-          <div class="stats-label">Hustota</div>
-          <div class="stats-value" id="densityValue">—</div>
-        </div>
+  <div class="stats-panel">
+    <div class="stats" aria-live="polite">
+      <div class="stat-item">
+        <div class="stats-label">Počet míčků</div>
+        <div class="stats-value" id="ballCountDisplay">—</div>
       </div>
-      <div class="stats-actions">
-        <button class="panel-btn reset-btn" id="resetBtn" type="button">Reset</button>
-        <button class="panel-btn help-btn" id="helpBtn" type="button">Nápověda</button>
+      <div class="stat-item">
+        <div class="stats-label">Obsah plochy</div>
+        <div class="stats-value" id="areaValue">—</div>
+      </div>
+      <div class="stat-item">
+        <div class="stats-label">Hustota</div>
+        <div class="stats-value" id="densityValue">—</div>
       </div>
     </div>
+    <div class="stats-actions">
+      <button class="panel-btn reset-btn" id="resetBtn" type="button">Reset</button>
+      <button class="panel-btn help-btn" id="helpBtn" type="button">Nápověda</button>
+    </div>
+  </div>
 
+  <div class="app-shell">
+    <div class="main">
     <div class="arena-composite" id="arenaComposite">
       <div class="arena" id="arena">
         <canvas id="canvas"></canvas>
@@ -46,6 +47,7 @@
       <div class="resize-handle e" data-edge="e"></div>
       <div class="resize-handle w" data-edge="w"></div>
       <p class="resize-hint" id="resizeHint">Táhni za okraj</p>
+    </div>
     </div>
   </div>
 

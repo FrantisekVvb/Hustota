@@ -4,33 +4,51 @@
   padding: 0;
 }
 
+html {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 body {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  min-height: 100%;
+  height: 100%;
+  margin: 0;
   background: #ffffff;
   font-family: system-ui, -apple-system, sans-serif;
   color: #0b1220;
-  gap: 1.5rem;
-  padding: 2rem;
-  transform: translateY(-5px) scale(0.95);
-  transform-origin: center center;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.app-shell {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 2.5rem 2rem 1.5rem;
+  transform: translateY(15px) scale(0.9025);
+  transform-origin: top center;
+  touch-action: none;
 }
 
 .main {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 1.25rem;
-  width: 100%;
-  transform: translateX(-30px);
+  flex-shrink: 0;
+  transform: translateX(60px);
 }
 
 .stats-panel {
+  position: fixed;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 260px;
-  flex-shrink: 0;
+  z-index: 5;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -154,10 +172,9 @@ body {
   position: relative;
   display: inline-flex;
   align-items: stretch;
-  margin-top: 40px;
   margin-right: 56px;
   margin-bottom: 48px;
-  transform: translateY(-35px);
+  touch-action: none;
 }
 
 .arena-controls {
@@ -360,6 +377,7 @@ canvas {
   right: 16px;
   top: 50%;
   transform: translateY(-50%);
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
