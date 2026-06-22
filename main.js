@@ -5,6 +5,7 @@ const helpCloseBtn = document.getElementById('helpCloseBtn');
 const fieldModeOneBtn = document.getElementById('fieldModeOne');
 const fieldModeTwoBtn = document.getElementById('fieldModeTwo');
 const maskBtn = document.getElementById('maskBtn');
+const pauseBtn = document.getElementById('pauseBtn');
 const appShell = document.querySelector('.app-shell');
 
 const BALL_RADIUS = 4;
@@ -27,6 +28,7 @@ const MASK_BLUR_PX = 10;
 const fields = [];
 let activeFieldCount = DEFAULT_FIELD_COUNT;
 let maskEnabled = false;
+let pauseEnabled = false;
 
 function getFieldCount() {
   return activeFieldCount;
@@ -1253,6 +1255,19 @@ function updateMaskButton() {
     : 'Zapnout masku — rozmaže plochu kromě okna 1 cm²';
 }
 
+function updatePauseButton() {
+  if (!pauseBtn) return;
+  pauseBtn.setAttribute('aria-pressed', pauseEnabled ? 'true' : 'false');
+  pauseBtn.title = pauseEnabled
+    ? 'Spustit pohyb míčků'
+    : 'Zastavit pohyb míčků';
+}
+
+function setPauseEnabled(enabled) {
+  pauseEnabled = enabled;
+  updatePauseButton();
+}
+
 function setMaskEnabled(enabled) {
   maskEnabled = enabled;
   updateMaskButton();
@@ -1291,7 +1306,9 @@ function resetAllFields() {
 
 function loop() {
   getVisibleFields().forEach((field) => {
-    field.update();
+    if (!pauseEnabled) {
+      field.update();
+    }
     field.draw();
   });
   requestAnimationFrame(loop);
@@ -1300,6 +1317,7 @@ function loop() {
 initFields();
 setActiveFieldCount(DEFAULT_FIELD_COUNT);
 updateMaskButton();
+updatePauseButton();
 
 fields.forEach((field) => {
   field.setCellSize(field.cellSize);
@@ -1323,6 +1341,10 @@ fieldModeTwoBtn.addEventListener('click', () => {
 
 maskBtn?.addEventListener('click', () => {
   setMaskEnabled(!maskEnabled);
+});
+
+pauseBtn?.addEventListener('click', () => {
+  setPauseEnabled(!pauseEnabled);
 });
 
 helpBtn.addEventListener('click', () => {

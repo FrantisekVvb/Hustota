@@ -168,7 +168,8 @@ body.fields-mode--two .arena-composite {
   min-width: 120px;
 }
 
-.mask-btn[aria-pressed="true"] {
+.mask-btn[aria-pressed="true"],
+.pause-btn[aria-pressed="true"] {
   background: #eff6ff;
   border-color: rgba(37, 99, 235, 0.45);
   color: #2563eb;
