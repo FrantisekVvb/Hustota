@@ -63,6 +63,71 @@ function formatDensityText(value) {
   return `${number} ${ballWord(rounded)} na cm²`;
 }
 
+let activeScrubDragStop = null;
+
+function bindChannelScrubDrag(scrubEl, getStartValue, applyDragValue) {
+  let dragging = false;
+  let startX = 0;
+  let startV = 0;
+  let activePointerId = null;
+
+  const applyFromDrag = (clientX) => {
+    const delta = Math.round((clientX - startX) / 2);
+    applyDragValue(startV + delta);
+  };
+
+  const stopDragging = () => {
+    if (!dragging) return;
+    dragging = false;
+    activePointerId = null;
+    if (activeScrubDragStop === stopDragging) {
+      activeScrubDragStop = null;
+    }
+    window.removeEventListener('pointermove', onPointerMove, true);
+    window.removeEventListener('pointerup', onPointerUp, true);
+    window.removeEventListener('pointercancel', onPointerUp, true);
+    document.removeEventListener('mouseup', onMouseUp, true);
+    window.removeEventListener('blur', stopDragging);
+  };
+
+  const onPointerMove = (e) => {
+    if (!dragging || e.pointerId !== activePointerId) return;
+    if (e.pointerType === 'mouse' && !(e.buttons & 1)) {
+      stopDragging();
+      return;
+    }
+    applyFromDrag(e.clientX);
+  };
+
+  const onPointerUp = (e) => {
+    if (!dragging || e.pointerId !== activePointerId) return;
+    stopDragging();
+  };
+
+  const onMouseUp = () => stopDragging();
+
+  scrubEl.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    if (e.target.closest('.channel-scrub-arrow')) return;
+
+    if (activeScrubDragStop) {
+      activeScrubDragStop();
+    }
+    activeScrubDragStop = stopDragging;
+
+    dragging = true;
+    activePointerId = e.pointerId;
+    startX = e.clientX;
+    startV = getStartValue();
+
+    window.addEventListener('pointermove', onPointerMove, true);
+    window.addEventListener('pointerup', onPointerUp, true);
+    window.addEventListener('pointercancel', onPointerUp, true);
+    document.addEventListener('mouseup', onMouseUp, true);
+    window.addEventListener('blur', stopDragging);
+  });
+}
+
 function getLayoutContentSize() {
   const main = appShell?.querySelector('.main');
   if (!main) {
@@ -622,19 +687,27 @@ class Field {
   startResize(e, handle) {
     this.dismissResizeHint();
     e.preventDefault();
-    handle.setPointerCapture(e.pointerId);
+    try {
+      handle.setPointerCapture(e.pointerId);
+    } catch (_) {}
     this.dragState = {
       edge: handle.dataset.edge,
       startX: e.clientX,
       startY: e.clientY,
       startSize: this.cellSize,
       handle,
+      pointerId: e.pointerId,
     };
     handle.classList.add('active');
   }
 
   moveResize(e) {
     if (!this.dragState) return;
+    if (e.pointerId !== this.dragState.pointerId) return;
+    if (e.pointerType === 'mouse' && !(e.buttons & 1)) {
+      this.stopResize(e);
+      return;
+    }
     const delta = this.resizeDelta(
       this.dragState.edge,
       e.clientX - this.dragState.startX,
@@ -645,8 +718,12 @@ class Field {
 
   stopResize(e) {
     if (!this.dragState) return;
-    if (e && this.dragState.handle.hasPointerCapture(e.pointerId)) {
-      this.dragState.handle.releasePointerCapture(e.pointerId);
+    if (e?.pointerId != null) {
+      try {
+        if (this.dragState.handle.hasPointerCapture(e.pointerId)) {
+          this.dragState.handle.releasePointerCapture(e.pointerId);
+        }
+      } catch (_) {}
     }
     this.dragState.handle.classList.remove('active');
     this.dragState = null;
@@ -996,14 +1073,11 @@ class Field {
   }
 
   bindAreaScrub() {
-    let dragging = false;
-    let startX = 0;
-    let startV = 0;
-
-    const applyFromDrag = (clientX) => {
-      const delta = Math.round((clientX - startX) / 2);
-      this.applyTotalAreaCm2Value(startV + delta);
-    };
+    bindChannelScrubDrag(
+      this.areaScrub,
+      () => this.getTotalAreaCm2(),
+      (value) => this.applyTotalAreaCm2Value(value)
+    );
 
     const bindScrubArrow = (el, delta) => {
       if (!el) return;
@@ -1021,34 +1095,6 @@ class Field {
 
     bindScrubArrow(this.areaScrub.querySelector('.channel-scrub-arrow-dec'), -1);
     bindScrubArrow(this.areaScrub.querySelector('.channel-scrub-arrow-inc'), 1);
-
-    this.areaScrub.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0) return;
-      if (e.target.closest('.channel-scrub-arrow')) return;
-      this.areaScrub.setPointerCapture(e.pointerId);
-      dragging = true;
-      startX = e.clientX;
-      startV = this.getTotalAreaCm2();
-      e.preventDefault();
-    });
-
-    this.areaScrub.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
-      applyFromDrag(e.clientX);
-    });
-
-    const endDrag = (e) => {
-      if (!dragging) return;
-      dragging = false;
-      try {
-        this.areaScrub.releasePointerCapture(e.pointerId);
-      } catch (_) {}
-    };
-
-    this.areaScrub.addEventListener('pointerup', endDrag);
-    this.areaScrub.addEventListener('pointercancel', () => {
-      dragging = false;
-    });
 
     this.areaScrub.addEventListener('keydown', (e) => {
       let next = this.getTotalAreaCm2();
@@ -1078,14 +1124,11 @@ class Field {
   }
 
   bindBallCountScrub() {
-    let dragging = false;
-    let startX = 0;
-    let startV = 0;
-
-    const applyFromDrag = (clientX) => {
-      const delta = Math.round((clientX - startX) / 2);
-      this.applyTotalBallCountValue(startV + delta);
-    };
+    bindChannelScrubDrag(
+      this.ballCountScrub,
+      () => this.getTotalBallCount(),
+      (value) => this.applyTotalBallCountValue(value)
+    );
 
     const bindScrubArrow = (el, delta) => {
       if (!el) return;
@@ -1103,34 +1146,6 @@ class Field {
 
     bindScrubArrow(this.ballCountScrub.querySelector('.channel-scrub-arrow-dec'), -1);
     bindScrubArrow(this.ballCountScrub.querySelector('.channel-scrub-arrow-inc'), 1);
-
-    this.ballCountScrub.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0) return;
-      if (e.target.closest('.channel-scrub-arrow')) return;
-      this.ballCountScrub.setPointerCapture(e.pointerId);
-      dragging = true;
-      startX = e.clientX;
-      startV = this.getTotalBallCount();
-      e.preventDefault();
-    });
-
-    this.ballCountScrub.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
-      applyFromDrag(e.clientX);
-    });
-
-    const endDrag = (e) => {
-      if (!dragging) return;
-      dragging = false;
-      try {
-        this.ballCountScrub.releasePointerCapture(e.pointerId);
-      } catch (_) {}
-    };
-
-    this.ballCountScrub.addEventListener('pointerup', endDrag);
-    this.ballCountScrub.addEventListener('pointercancel', () => {
-      dragging = false;
-    });
 
     this.ballCountScrub.addEventListener('keydown', (e) => {
       let next = this.getTotalBallCount();
@@ -1342,8 +1357,19 @@ window.addEventListener('pointerup', (e) => {
   fields.forEach((field) => field.stopResize(e));
 });
 
-window.addEventListener('pointercancel', () => {
+window.addEventListener('pointercancel', (e) => {
+  fields.forEach((field) => field.stopResize(e));
+});
+
+document.addEventListener('mouseup', () => {
   fields.forEach((field) => field.stopResize());
+});
+
+window.addEventListener('blur', () => {
+  fields.forEach((field) => field.stopResize());
+  if (activeScrubDragStop) {
+    activeScrubDragStop();
+  }
 });
 
 appShell.addEventListener('touchmove', (e) => {
